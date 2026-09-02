@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product Information - M/S PATHAN MOTORS</title>
-  <!-- Puter.js SDK -->
-  <script src="https://js.puter.com/v2/"></script>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -42,6 +40,7 @@
     .header-logo {
       height: 75px;
       width: auto;
+      max-width: 160px;
       object-fit: contain;
     }
     .header-title-box h1 {
@@ -56,17 +55,7 @@
       font-size: 16px;
       font-weight: 600;
     }
-    /* অথেন্টিকেশন বক্স */
-    .auth-box {
-      background: #fdf2f2;
-      padding: 14px 18px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 1px solid #fecaca;
-    }
+    /* আপলোড বক্স */
     .upload-zone {
       border: 2px dashed #d90429;
       border-radius: 8px;
@@ -99,8 +88,7 @@
       align-items: center;
       gap: 8px;
     }
-    .btn-auth { background: #d90429; color: #fff; }
-    .btn-process { background: #1a73e8; color: #fff; }
+    .btn-process { background: #d90429; color: #fff; }
     .btn-copy { background: #0f9d58; color: #fff; display: none; }
     .btn:disabled { background: #aaa; cursor: not-allowed; }
     #status {
@@ -148,17 +136,11 @@
   <div class="container">
     <!-- হেডার অংশ -->
     <div class="header-section">
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAAB8CAMAAACt6g2vAAAAwFBMVEUAAAD////+/v78/Pz6+vr4+Pj39/f19fX09PTy8vLu7u7s7Ozo6Ojl5eXh4eHe3t7c3Nzb29vX19fV1dXU1NTR0dHPz8/Ly8vJycnIyMjGxsbExMTBwcG/v7+8vLzHx8e9vb3AwMDGxsa9vb28vLy9vb3AwMDExMTDw8PBwcHAwMDAwMC8vLy9vb2+vr6+vr7AwMC9vb3AwMC+vr7Dw8PBwcG/v7+/v7/BwcHDw8PBwcHCwsK9vb2+vr6+vr4p2T47AAAAKHRSTlMABg4RFRwbHCEjJSssLzAzNTY3ODk/P0JDTk9SUVZbXGFjZmhpeXyHicXn/fIAAAhhSURBVHja7VzZduJAEFRq37tXgE1gs4FtMBjbvPn/r7mFkASpqu7W0zM9uafOCMvqqapb1dUF62n+x/53Bqf3p2mP479k8O0+z+Tz81i+77gP6H+K5V/T1h684fPzy5vV7vH17aV9+Lz5f2D6Z0716Q2en51eH+mD3528bO1v9Gz25mXv6fF+/68z/f2vL/aJ35++PTm+u3u436/2p/v7/evr08vP+5v7p/X+/uP2e/e12dO3X7P9y4f3N9f3d99+31v6xuvl+O7y9eH2/v7l6eP14/eP/VefH+7vV8cfd6v154u/jO0/vHl6uLt//rja29eP37f225en93e3D19/7e/vbvZXHzfPq/1P+3N3dfn14enX7j54v/r5/PT2d3f78Xl9/+n2fvfxff/p28f73fX7x+7746/X/cf929d/yvbnJ2f3T6/P7969f/61f96dfD3u9tfXP58+7b593796f7z/enW8/7pffXx/+75/u14fP13/s+2/P72/v7n/ev/106fb3ae7l+fr+/vjx/vr+5v727uvn76v7l/er+/eb+9339efrvbf/pntX15/vj/ev9/efr57en28+XJ9ebh5vr6+ffr6fP31cf/54ebl3fXl8fH2enV/v/v84a/b/ufH+4fV8e7+0/vd8+fn2+vb+8+fr3fX158/P18fv368fvz548P9p4/71ebT09W3/eH/2f7h+ub28fn28fP13e7T/Y+rx7uvN5+uP90eP/788fD16+f7+9vnh5ur1evj3eP9/tP/b/vLh6vL/d3r5f2/r/dfr3ef7l9u3t6ubz9/ebvdPz2uPtzff/r4cPf68vT34/fvq1cfP//N9g8fbp+vD6/vbh4e73a726enrx8fHx7evtx+vrp9fnh8eXr6ePvj6fP/wvaP17tPDz/ePnx+frk+3D093T+uPl9/vry72t/frnffv37e3355uP/t2tN/9v+34/8q6Gk/3oP/C0FP+98f/Pf4R9h++1v8z2w/g932h3n/a9sff3mX/vO/vN1j98+W0r94e6eK1zP933o/e3uBf2g4/M+w/Vfa38D+7uH59vbD5/vb/e3l4erD9b/0b8e73cfHh/vr2+vPt4fPr/af7z/+521v/x+f/e3u4fPl9v729fL+48fr3cv97tP9/vMfu/f/YPt7e4H/7M+vV/t315f3H2+vd/e3L/fX26vt5v39w5+4/bvPz/ff3t6+fX6+vfn8dH15uPtxvbv+/Gfn/xvb371e3n26fvn47fP7m8839+8/f9t/en95+/l69/72+/2/2/5q+/j0/nh3e3e7f/r08fr++v314frh8/3H+/v7D3/07/7yv7398eFq9/Hzfnd7e3e9//Hj+fPDw/Xl9v79h5/v73bf3368297/3/P9k6vP16v319ffHn58vL37/PH+7u7t68v7/evn58eHHz/v3+8fHu/vXv7n15/+/P56//j6eP/8/evHh+e729vr6+frx+v7D7/vVq/3d7/v3+3fvv+/6v39/e7l/uP7+/u7l4/vr58/f/724/ru7eXD9eef2/9v/Pnh/tP97vPnq4+f3z28ffvx9PL27v2P/dv9/ftP71cfP+0/X//f8f3H5+e79+9/3Hz56+r5zfvP73evP72/f/316f7+0/X2y48/Xq7vvv8f2N8/Pt5e33y/vr78vH77/PPb09P964/vP7/f/7j9cfv++ePN/qf9v1746f3H1eXTj9u755f3Pz++ffp8fv321/PD48v7+7e7f77b7m//f63P0/sPV7tPny73r1d39/fv372+e//p5dO3h4eff/90ffPx18e/Xvj59+2P91cvD4+3b1eXH25un54fvnz+vL66/fx+e3h6eHj49O7T1f6/Vv/3x6v754ebx+vHq8+fPn77/v2X+y8fbz49/3x8uLre/X738enPv3/+X9x++7z7fvnw89X1+u6Xn8/Xn56uP97d/fjw44frr48fP9w+vD39eH39/7r3299/f/f29uXh4e3L28enT49vnq+f33/88PP+5fv7+8+X69vbh6uPr/9Xvf/78fV+d3n7/PXl5u3H+9vPP28+f3u7f/v49Ofrh7tfrp/uX/7v2d/+2t+vfv58fPz89PXj3Zdv9z9ev/w8vP+5fv54ff9wffP35z/9t19/7e/vbvZXHzfPq/1P+3N3dfn14enX7j54v/r5/PT2d3f78Xl9/+n2fvfxff/p28f73fX7x+7746/X/cf929d/yvbnJ2f3T6/P7969f/61f96dfD3u9tfXP58+7b593796f7z/enW8/7pffXx/+75/u14fP13/s+2/P72/v7n/ev/106fb3ae7l+fr+/vjx/vr+5v727uvn76v7l/er+/eb+9339efrvbf/pntX15/vj/ev9/efr57en28+XJ9ebh5vr6+ffr6fP31cf/54ebl3fXl8fH2enV/v/v84a/b/ufH+4fV8e7+0/vd8+fn2+vb+8+fr3fX158/P18fv368fvz548P9p4/71ebT09W3/eH/2f7h+ub28fn28fP13e7T/Y+rx7uvN5+uP90eP/788fD16+f7+9vnh5ur1evj3eP9/tP/b/vLh6vL/d3r5f2/r/dfr3ef7l9u3t6ubz9/ebvdPz2uPtzff/r4cPf68vT34/fvq1cfP//N9g8fbp+vD6/vbh4e73a726enrx8fHx7evtx+vrp9fnh8eXr6ePvj6fP/wvaP17tPDz/ePnx+frk+3D093T+uPl9/vry72t/frnffv37e3355uP/t2tN/9v833n/hfxm7B/8FzR78/4Ldtf9V7Ff7P/q34639b/7f9e8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+P/zF+sLgL1L3Fz0AAAAAElFTkSuQmCC" alt="Pathan Motors Logo" class="header-logo">
+      <img src="logo.png" alt="Pathan Motors Logo" class="header-logo" onerror="this.style.display='none'">
       <div class="header-title-box">
         <h1>M/S PATHAN MOTORS</h1>
         <h3>Product Information System</h3>
       </div>
-    </div>
-
-    <!-- অথেন্টিকেশন বক্স (লগইন) -->
-    <div class="auth-box">
-      <div id="userInfo">লগইন স্ট্যাটাস চেক করা হচ্ছে...</div>
-      <button id="authBtn" class="btn btn-auth" onclick="handleAuth()">গুগল দিয়ে সাইন ইন করুন</button>
     </div>
 
     <!-- ইমেজ আপলোড অংশ -->
@@ -196,42 +178,21 @@
 </footer>
 
 <script>
-  let selectedFile = null;
+  const API_KEY = "AQ.Ab8RN6IKQ48gqPbay289_aX7HHu2WVa5URf_O2ZjKk21fiuA6w";
+
+  let base64Image = null;
   let extractedRows = [];
-
-  window.onload = async function() {
-    checkUser();
-  };
-
-  async function checkUser() {
-    if (puter.auth.isSignedIn()) {
-      const user = await puter.auth.getUser();
-      document.getElementById('userInfo').innerHTML = `স্বাগতম, <b>${user.username || 'User'}</b>`;
-      document.getElementById('authBtn').innerText = 'লগআউট';
-    } else {
-      document.getElementById('userInfo').innerText = 'যেকোনো Gmail দিয়ে সাইন ইন করুন';
-      document.getElementById('authBtn').innerText = 'গুগল দিয়ে সাইন ইন করুন';
-    }
-  }
-
-  async function handleAuth() {
-    if (puter.auth.isSignedIn()) {
-      puter.auth.signOut();
-      checkUser();
-    } else {
-      await puter.auth.signIn();
-      checkUser();
-    }
-  }
 
   function handleImage(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    selectedFile = file;
     const reader = new FileReader();
     reader.onload = function(e) {
-      document.getElementById('previewBox').innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+      const fullBase64 = e.target.result;
+      base64Image = fullBase64.split(',')[1];
+      
+      document.getElementById('previewBox').innerHTML = `<img src="${fullBase64}" alt="Preview">`;
       document.getElementById('processBtn').disabled = false;
       document.getElementById('status').innerText = '';
     };
@@ -239,14 +200,7 @@
   }
 
   async function processImage() {
-    if (!puter.auth.isSignedIn()) {
-      alert("অনুগ্রহ করে আগে গুগল দিয়ে সাইন ইন করুন!");
-      await puter.auth.signIn();
-      checkUser();
-      return;
-    }
-
-    if (!selectedFile) {
+    if (!base64Image) {
       alert("অনুগ্রহ করে একটি ছবি সিলেক্ট করুন!");
       return;
     }
@@ -257,7 +211,7 @@
     status.innerText = 'স্বয়ংক্রিয়ভাবে হাতের লেখা পড়ে ডেটা প্রসেস হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...';
     processBtn.disabled = true;
 
-    const promptText = `
+    const prompt = `
 You are an expert handwritten auto-parts invoice parser.
 Read the table in the image row by row. If there are ditto marks (' ' or -) repeating previous rows, fill in the correct values.
 Strict formatting instructions:
@@ -276,11 +230,23 @@ Return ONLY valid raw JSON without markdown or backticks.
 `;
 
     try {
-      const response = await puter.ai.chat(promptText, selectedFile, {
-        model: 'gemini-2.5-flash'
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+            ]
+          }]
+        })
       });
 
-      let rawText = response.toString().trim();
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message);
+
+      let rawText = data.candidates[0].content.parts[0].text.trim();
       if (rawText.startsWith('```')) {
         rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
       }
@@ -314,7 +280,6 @@ Return ONLY valid raw JSON without markdown or backticks.
     table.style.display = 'table';
   }
 
-  // শুধুমাত্র ডেটা কপি করার জন্য আপডেট করা ফাংশন (কোনো হেডার থাকবে না)
   function copyForSheet() {
     if (extractedRows.length === 0) return;
 
