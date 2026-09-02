@@ -131,6 +131,7 @@
       padding: 12px;
       text-align: left;
       font-size: 14px;
+      text-transform: uppercase; /* ডিসপ্লেতেও সম্পূর্ণ বড় হাতের দেখাবে */
     }
     th { background-color: #f8fafc; color: #475569; }
     tr:nth-child(even) { background-color: #f9fbfd; }
@@ -156,7 +157,6 @@
 
 <div class="main-wrapper">
   <div class="container">
-    <!-- হেডার অংশ -->
     <div class="header-section">
       <img src="logo.png" alt="Pathan Motors Logo" class="header-logo" onerror="this.style.display='none'">
       <div class="header-title-box">
@@ -165,7 +165,6 @@
       </div>
     </div>
 
-    <!-- API Key ইনপুট বক্স (ব্রাউজারে সেভ থাকবে) -->
     <div class="config-box">
       <label for="apiKey">আপনার Google Gemini API Key দিন (১০০% ফ্রি):</label>
       <input type="password" id="apiKey" placeholder="AIzaSy..." onchange="saveKey()">
@@ -174,7 +173,6 @@
       </small>
     </div>
 
-    <!-- ইমেজ আপলোড অংশ -->
     <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
       <input type="file" id="fileInput" accept="image/*" onchange="handleImage(event)">
       <strong>ছবি সিলেক্ট করুন বা এখানে ড্রপ করুন</strong>
@@ -182,7 +180,6 @@
       <div class="preview-box" id="previewBox"></div>
     </div>
 
-    <!-- অ্যাকশন বাটন -->
     <div style="display: flex; gap: 10px;">
       <button id="processBtn" class="btn btn-process" onclick="processImage()" disabled>⚡ Auto Extract Data</button>
       <button id="copyBtn" class="btn btn-copy" onclick="copyForSheet()">📋 Copy for Google Sheets</button>
@@ -190,7 +187,6 @@
 
     <div id="status"></div>
 
-    <!-- এক্সট্রাক্ট করা ডেটা টেবিল -->
     <table id="resultTable" style="display:none;">
       <thead>
         <tr>
@@ -203,7 +199,6 @@
   </div>
 </div>
 
-<!-- ফুটার অংশ (ক্রেডিট) -->
 <footer>
   Developed by <b>Dip Raha</b> | Email: <a href="mailto:dipraha7@gmail.com">dipraha7@gmail.com</a> | Cell: <a href="tel:01910226680">01910226680</a>
 </footer>
@@ -212,7 +207,6 @@
   let base64Image = null;
   let extractedRows = [];
 
-  // পেজ লোড হলে সংরক্ষিত API Key বসানো
   window.onload = function() {
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) {
@@ -260,26 +254,33 @@
     status.innerText = 'স্বয়ংক্রিয়ভাবে হাতের লেখা পড়ে ডেটা প্রসেস হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...';
     processBtn.disabled = true;
 
+    // বাংলা শব্দ থাকলে ইংরেজি অক্ষরে রূপান্তর এবং সম্পূর্ণ UPPERCASE রাখার প্রম্পট
     const prompt = `
 You are an expert handwritten auto-parts invoice parser.
 Read the table in the image row by row. If there are ditto marks (' ' or -) repeating previous rows, fill in the correct values.
-Strict formatting instructions:
+
+CRITICAL INSTRUCTIONS:
+1. STRICTLY CONVERT ANY BENGALI WORDS/LETTERS INTO ENGLISH CHARACTERS (e.g., if handwritten in Bangla like 'চাকার ছোট', transliterate/translate to 'CHAKAR CHOTO' or 'CHAKAR SMALL'). Do NOT keep any Bengali script.
+2. ALL TEXT OUTPUT MUST BE STRICTLY UPPERCASE ONLY.
+
 Format each row as a raw JSON array of objects:
 [
   {
-    "group": "Gear/Spring/etc.",
-    "formatted_description": "Brand name - Description (local language) - car details"
+    "group": "GEAR/SPRING/ETC.",
+    "formatted_description": "BRAND NAME - DESCRIPTION (LOCAL LANGUAGE) - CAR DETAILS"
   }
 ]
+
 Rule for "formatted_description":
-- Format MUST be: Brand - Description (Local Language) - Car Details
-- If Local Language is present, wrap it in brackets: (Local Language).
-- If Local Language is NOT present (empty or dash), DO NOT include brackets. The format will be: Brand - Description - Car Details.
+- Format MUST be: BRAND - DESCRIPTION (LOCAL LANGUAGE) - CAR DETAILS
+- If LOCAL LANGUAGE is present, wrap it in brackets: (LOCAL LANGUAGE).
+- If LOCAL LANGUAGE is NOT present (empty or dash), DO NOT include brackets: BRAND - DESCRIPTION - CAR DETAILS.
+- EVERYTHING in group and formatted_description MUST BE IN UPPERCASE ENGLISH ONLY.
+
 Return ONLY valid raw JSON without markdown or backticks.
 `;
 
     try {
-      // লেটেস্ট gemini-3.6-flash মডেল ব্যবহার করা হয়েছে
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -301,7 +302,13 @@ Return ONLY valid raw JSON without markdown or backticks.
         rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
       }
 
-      extractedRows = JSON.parse(rawText);
+      const parsed = JSON.parse(rawText);
+      // কোড লেভেলেও নিশ্চিত করা যে সব টেক্সট বাধ্যতামূলক UPPERCASE হবে
+      extractedRows = parsed.map(r => ({
+        group: (r.group || '').toUpperCase(),
+        formatted_description: (r.formatted_description || '').toUpperCase()
+      }));
+
       renderTable(extractedRows);
 
       status.className = 'success';
@@ -330,7 +337,7 @@ Return ONLY valid raw JSON without markdown or backticks.
     table.style.display = 'table';
   }
 
-  // শুধুমাত্র মূল ডেটা কপি হবে (গুগল শিটে সহজে পেস্ট করার জন্য কোনো হেডার থাকবে না)
+  // শুধুমাত্র মূল ডেটা UPPERCASE ফরম্যাটে কপি হবে (হেডার ছাড়া)
   function copyForSheet() {
     if (extractedRows.length === 0) return;
 
