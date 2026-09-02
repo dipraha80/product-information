@@ -172,12 +172,13 @@
   </div>
 </div>
 
-<!-- ফুটার অংশ (ক্রেডিট) -->
+<!-- ফুটার অংশ (Dip Raha ক্রেডিট) -->
 <footer>
   Developed by <b>Dip Raha</b> | Email: <a href="mailto:dipraha7@gmail.com">dipraha7@gmail.com</a> | Cell: <a href="tel:01910226680">01910226680</a>
 </footer>
 
 <script>
+  // আপনার দেওয়া ফাইনাল কী
   const API_KEY = "AQ.Ab8RN6K1IbEeL81z3MYuWlq9jBFp5_Zm7q9FWFqtPM1fMIh12w";
 
   let base64Image = null;
@@ -230,7 +231,8 @@ Return ONLY valid raw JSON without markdown or backticks.
 `;
 
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+      // মডেল আপডেট করে gemini-3.6-flash দেওয়া হয়েছে
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -280,6 +282,7 @@ Return ONLY valid raw JSON without markdown or backticks.
     table.style.display = 'table';
   }
 
+  // শুধুমাত্র আসল ডেটা কপি হবে (গুগল শিটের সুবিধার জন্য হেডার বাদ)
   function copyForSheet() {
     if (extractedRows.length === 0) return;
 
