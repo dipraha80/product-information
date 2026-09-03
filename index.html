@@ -214,7 +214,7 @@
       </div>
       <div class="config-box">
         <label for="startCode">Unique Starting Code:</label>
-        <input type="text" id="startCode" placeholder="e.g. 1001 বা A101">
+        <input type="text" id="startCode" placeholder="e.g. 1001">
         <small style="color: #666; display:block; margin-top: 4px;">
           * প্রথম আইটেমের বারকোডের কোড
         </small>
@@ -359,7 +359,7 @@
     const processBtn = document.getElementById('processBtn');
 
     status.className = 'loading';
-    status.innerText = 'স্বয়ংক্রিয়ভাবে হাতের লেখা পড়ে ডেটা প্রসেস হচ্ছে (gemini-3.6-flash)...';
+    status.innerText = 'স্বয়ংক্রিয়ভাবে হাতের লেখা পড়ে ডেটা প্রসেস হচ্ছে...';
     processBtn.disabled = true;
 
     const prompt = `
