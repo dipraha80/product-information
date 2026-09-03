@@ -197,7 +197,7 @@
     <div class="instruction-banner">
       <div class="instruction-text">
         <strong>📌 নির্দেশনা:</strong>
-        প্রোডাক্ট বানানোর পূর্বে ফরম্যাটটি প্রিন্ট করে হাতে তথ্যাদি লিখুন। এরপর সেই পাতার ছবি তুলে নিচে আপলোড করুন।
+        প্রোডাক্ট বানানোর পূর্বে ফরম্যাটটি প্রিন্ট করে হাতে তথ্যাদি লিখুন। এরপর সেই পাতার ছবি তুলে নিচে আপলোড করুন।।
       </div>
       <button type="button" class="btn btn-print-action" onclick="printPDF()">
         🖨️ Print Form (PDF)
@@ -359,7 +359,7 @@
     const processBtn = document.getElementById('processBtn');
 
     status.className = 'loading';
-    status.innerText = 'স্বয়ংক্রিয়ভাবে হাতের লেখা পড়ে ডেটা প্রসেস হচ্ছে...';
+    status.innerText = 'স্বয়ংক্রিয়ভাবে হাতের লেখা পড়ে ডেটা প্রসেস হচ্ছে (gemini-3.6-flash)...';
     processBtn.disabled = true;
 
     const prompt = `
@@ -367,7 +367,7 @@ You are an expert handwritten auto-parts invoice parser.
 Read the table in the image row by row. If there are ditto marks (' ' or -) repeating previous rows, fill in the correct values.
 
 CRITICAL INSTRUCTIONS:
-1. STRICTLY CONVERT ANY BENGALI WORDS/LETTERS INTO ENGLISH CHARACTERS (e.g. transliterate/translate to UPPERCASE English). No Bengali characters.
+1. STRICTLY CONVERT ANY BENGALI WORDS/LETTERS INTO ENGLISH CHARACTERS (transliterate/translate to UPPERCASE English). No Bengali characters.
 2. ALL TEXT OUTPUT MUST BE STRICTLY UPPERCASE.
 3. Extract 'group', 'brand', and the 'formatted_description'.
 
@@ -385,91 +385,68 @@ Rule for "formatted_description":
 - If LOCAL LANGUAGE is present, wrap it in brackets: (LOCAL LANGUAGE).
 - If LOCAL LANGUAGE is NOT present (empty or dash), DO NOT include brackets: BRAND - DESCRIPTION - CAR DETAILS.
 
-Return ONLY raw JSON array. Do not wrap in markdown or explanation.
+Return ONLY the raw JSON array. Do not include markdown code block backticks or explanation.
 `;
 
-    // গুগলের রেকমেন্ড করা লেটেস্ট মডেল তালিকা
-    const targetModels = [
-      'gemini-3.1-flash-preview',
-      'gemini-3.1-pro-preview',
-      'gemini-2.0-flash'
-    ];
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+            ]
+          }]
+        })
+      });
 
-    let success = false;
-    let lastError = null;
-
-    for (const model of targetModels) {
-      try {
-        status.innerText = `মডেল (${model}) দিয়ে প্রসেস করা হচ্ছে...`;
-
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: prompt },
-                { inline_data: { mime_type: "image/jpeg", data: base64Image } }
-              ]
-            }],
-            generationConfig: {
-              response_mime_type: "application/json"
-            }
-          })
-        });
-
-        const data = await response.json();
-        if (data.error) {
-          throw new Error(data.error.message);
-        }
-
-        if (!data.candidates || !data.candidates[0].content || !data.candidates[0].content.parts) {
-          throw new Error("API থেকে কোনো রেসপন্স আসেনি।");
-        }
-
-        let rawText = data.candidates[0].content.parts[0].text.trim();
-        const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) {
-          throw new Error("সঠিক ফরম্যাটে ডেটা পাওয়া যায়নি।");
-        }
-
-        const parsed = JSON.parse(jsonMatch[0]);
-
-        extractedRows = parsed.map((r, index) => {
-          const groupStr = (r.group || 'GRP').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-          const brandStr = (r.brand || 'BRD').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-
-          const g3 = (groupStr.padEnd(3, 'X')).substring(0, 3);
-          const b3 = (brandStr.padEnd(3, 'X')).substring(0, 3);
-          const uniqueCode = getNextCode(startCodeInput, index).toUpperCase();
-
-          const barcode = `${g3}${b3}${uniqueCode}`;
-
-          return {
-            group: (r.group || '').toUpperCase(),
-            formatted_description: (r.formatted_description || '').toUpperCase(),
-            barcode: barcode
-          };
-        });
-
-        renderTable(extractedRows);
-        status.className = 'success';
-        status.innerText = `সফলভাবে ${extractedRows.length} টি আইটেম তৈরি হয়েছে!`;
-        document.getElementById('copyBtn').style.display = 'inline-flex';
-        success = true;
-        break;
-      } catch (err) {
-        console.warn(`${model} ব্যর্থ হয়েছে:`, err.message);
-        lastError = err;
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error.message);
       }
-    }
 
-    if (!success) {
+      if (!data.candidates || !data.candidates[0].content || !data.candidates[0].content.parts) {
+        throw new Error("এপিআই থেকে কোনো টেক্সট আসেনি। অনুগ্রহ করে স্পষ্ট ছবি দিন।");
+      }
+
+      let rawText = data.candidates[0].content.parts[0].text.trim();
+      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        throw new Error("সঠিক টেবিল ফরম্যাটে ডেটা পাওয়া যায়নি।");
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      extractedRows = parsed.map((r, index) => {
+        const groupStr = (r.group || 'GRP').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        const brandStr = (r.brand || 'BRD').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+        const g3 = (groupStr.padEnd(3, 'X')).substring(0, 3);
+        const b3 = (brandStr.padEnd(3, 'X')).substring(0, 3);
+        const uniqueCode = getNextCode(startCodeInput, index).toUpperCase();
+
+        const barcode = `${g3}${b3}${uniqueCode}`;
+
+        return {
+          group: (r.group || '').toUpperCase(),
+          formatted_description: (r.formatted_description || '').toUpperCase(),
+          barcode: barcode
+        };
+      });
+
+      renderTable(extractedRows);
+      status.className = 'success';
+      status.innerText = `সফলভাবে ${extractedRows.length} টি আইটেম তৈরি হয়েছে!`;
+      document.getElementById('copyBtn').style.display = 'inline-flex';
+    } catch (err) {
+      console.error(err);
       status.className = 'error';
-      status.innerText = 'সমস্যা হয়েছে: ' + (lastError ? lastError.message : 'API সংযোগে সমস্যা');
+      status.innerText = 'সমস্যা হয়েছে: ' + err.message;
+    } finally {
+      processBtn.disabled = false;
     }
-
-    processBtn.disabled = false;
   }
 
   function renderTable(rows) {
