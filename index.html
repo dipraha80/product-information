@@ -28,7 +28,6 @@
       border-radius: 12px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
-    /* হেডার ডিজাইন */
     .header-section {
       display: flex;
       align-items: center;
@@ -55,7 +54,7 @@
       font-size: 16px;
       font-weight: 600;
     }
-    /* পিডিএফ ডাউনলোড ও নির্দেশনা ব্যানার */
+    /* নির্দেশনাসহ প্রিন্ট ব্যানার */
     .instruction-banner {
       background: #eff6ff;
       border-left: 5px solid #2563eb;
@@ -79,7 +78,6 @@
       margin-bottom: 2px;
       font-size: 14px;
     }
-    /* ইনপুট কনফিগ গ্রিড */
     .config-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
@@ -109,7 +107,6 @@
       border-radius: 6px;
       font-size: 14px;
     }
-    /* আপলোড বক্স */
     .upload-zone {
       border: 2px dashed #d90429;
       border-radius: 8px;
@@ -141,10 +138,9 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      text-decoration: none;
     }
-    .btn-download { background: #2563eb; color: #fff; white-space: nowrap; }
-    .btn-download:hover { background: #1d4ed8; }
+    .btn-print-action { background: #2563eb; color: #fff; white-space: nowrap; }
+    .btn-print-action:hover { background: #1d4ed8; }
     .btn-process { background: #d90429; color: #fff; }
     .btn-copy { background: #0f9d58; color: #fff; display: none; }
     .btn:disabled { background: #aaa; cursor: not-allowed; }
@@ -170,7 +166,6 @@
     }
     th { background-color: #f8fafc; color: #475569; }
     tr:nth-child(even) { background-color: #f9fbfd; }
-    /* ফুটার ডিজাইন */
     footer {
       background: #1e293b;
       color: #f8fafc;
@@ -192,7 +187,6 @@
 
 <div class="main-wrapper">
   <div class="container">
-    <!-- হেডার অংশ -->
     <div class="header-section">
       <img src="logo.png" alt="Pathan Motors Logo" class="header-logo" onerror="this.style.display='none'">
       <div class="header-title-box">
@@ -201,18 +195,17 @@
       </div>
     </div>
 
-    <!-- নির্দেশনাসহ PDF ফরম্যাট ডাউনলোড বক্স -->
+    <!-- নির্দেশনাসহ সরাসরি প্রিন্ট ব্যানার -->
     <div class="instruction-banner">
       <div class="instruction-text">
         <strong>📌 নির্দেশনা:</strong>
-        প্রোডাক্ট বানানোর পূর্বে নিচের ফরম্যাটটি ডাউনলোড করে প্রিন্ট করুন এবং তাতে তথ্যাদি হাতে পরিষ্কার করে লিখুন। এরপর সেই পাতার ছবি তুলে নিচে আপলোড করুন।
+        প্রোডাক্ট বানানোর পূর্বে ফরম্যাটটি প্রিন্ট করে হাতে তথ্যাদি লিখুন। এরপর সেই পাতার ছবি তুলে নিচে আপলোড করুন।
       </div>
-      <a href="INFO.pdf" target="_blank" download="INFO.pdf" class="btn btn-download">
-        📥 Download Format (PDF)
-      </a>
+      <button type="button" class="btn btn-print-action" onclick="printPDF()">
+        🖨️ Print Form (PDF)
+      </button>
     </div>
 
-    <!-- কনফিগারেশন গ্রিড: API Key এবং Unique Code -->
     <div class="config-grid">
       <div class="config-box">
         <label for="apiKey">Google Gemini API Key:</label>
@@ -230,7 +223,6 @@
       </div>
     </div>
 
-    <!-- ইমেজ আপলোড অংশ -->
     <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
       <input type="file" id="fileInput" accept="image/*" onchange="handleImage(event)">
       <strong>ছবি সিলেক্ট করুন বা এখানে ড্রপ করুন</strong>
@@ -238,7 +230,6 @@
       <div class="preview-box" id="previewBox"></div>
     </div>
 
-    <!-- অ্যাকশন বাটন -->
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
       <button id="processBtn" class="btn btn-process" onclick="processImage()" disabled>⚡ Auto Extract Data</button>
       <button id="copyBtn" class="btn btn-copy" onclick="copyForSheet()">📋 Copy for Google Sheets</button>
@@ -246,7 +237,6 @@
 
     <div id="status"></div>
 
-    <!-- এক্সট্রাক্ট করা ডেটা টেবিল: GROUP | DESCRIPTION | BARCODE -->
     <table id="resultTable" style="display:none;">
       <thead>
         <tr>
@@ -260,7 +250,9 @@
   </div>
 </div>
 
-<!-- ফুটার অংশ -->
+<!-- অদৃশ্য আইফ্রেম (সরাসরি PDF প্রিন্ট ডায়ালগ আনার জন্য) -->
+<iframe id="pdfFrame" src="INFO.pdf" style="display:none;"></iframe>
+
 <footer>
   Developed by <b>Dip Raha</b> | Email: <a href="mailto:dipraha7@gmail.com">dipraha7@gmail.com</a> | Cell: <a href="tel:01910226680">01910226680</a>
 </footer>
@@ -268,6 +260,26 @@
 <script>
   let base64Image = null;
   let extractedRows = [];
+
+  // সরাসরি PDF প্রিন্ট ফাংশন
+  function printPDF() {
+    const iframe = document.getElementById('pdfFrame');
+    if (iframe) {
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch (e) {
+        // মোবাইল ব্রাউজারে আইফ্রেম প্রিন্ট সাপোর্ট না করলে সরাসরি নতুন ট্যাবে প্রিন্ট ভিউ খুলবে
+        const printWindow = window.open('INFO.pdf', '_blank');
+        if (printWindow) {
+          printWindow.onload = function() {
+            printWindow.focus();
+            printWindow.print();
+          };
+        }
+      }
+    }
+  }
 
   window.onload = function() {
     const savedKey = localStorage.getItem('gemini_api_key');
