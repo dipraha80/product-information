@@ -143,12 +143,8 @@
     .btn-process { background: #d90429; color: #fff; }
     .btn-copy { background: #0f9d58; color: #fff; display: none; }
     .btn:disabled { background: #aaa; cursor: not-allowed; }
-    #status {
-      margin: 15px 0;
-      font-weight: bold;
-      font-size: 14px;
-    }
-    /* 📊 ডাইনামিক গ্রিন প্রোগ্রেস বার স্টাইল */
+
+    /* গ্রিন প্রোগ্রেস বার */
     .progress-container {
       display: none;
       margin: 15px 0;
@@ -175,9 +171,15 @@
     .progress-fill {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #10b981, #059669); /* সম্পূর্ণ সবুজ রঙ */
+      background: linear-gradient(90deg, #10b981, #059669);
       border-radius: 10px;
       transition: width 0.3s ease;
+    }
+
+    #status {
+      margin: 10px 0;
+      font-weight: bold;
+      font-size: 14px;
     }
     .loading { color: #d97706; }
     .success { color: #0f9d58; }
@@ -228,7 +230,7 @@
     <div class="instruction-banner">
       <div class="instruction-text">
         <strong>📌 নির্দেশনা:</strong>
-        প্রোডাক্ট বানানোর পূর্বে ফরম্যাটটি প্রিন্ট করে হাতে তথ্যাদি লিখুন, এরপর সেই পাতার ছবি তুলে নিচে আপলোড করুন।
+        প্রোডাক্ট বানানোর পূর্বে ফরম্যাটটি প্রিন্ট করে হাতে তথ্যাদি লিখুন। এরপর সেই পাতার ছবি তুলে নিচে আপলোড করুন।
       </div>
       <button type="button" class="btn btn-print-action" onclick="printPDF()">
         🖨️ Print Form (PDF)
@@ -245,7 +247,7 @@
       </div>
       <div class="config-box">
         <label for="startCode">Unique Starting Code:</label>
-        <input type="text" id="startCode" placeholder="e.g. 1001">
+        <input type="text" id="startCode" placeholder="e.g. 1001 বা A101">
         <small style="color: #666; display:block; margin-top: 4px;">
           * প্রথম আইটেমের বারকোডের কোড
         </small>
@@ -255,7 +257,7 @@
     <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
       <input type="file" id="fileInput" accept="image/*" onchange="handleImage(event)">
       <strong>ছবি সিলেক্ট করুন বা এখানে ড্রপ করুন</strong>
-      <p style="margin: 5px 0 0; color: #777; font-size: 13px;">হাতের লেখা ইনভয়েস বা খাতার স্পষ্ট ছবি দিন</p>
+      <p style="margin: 5px 0 0; color: #777; font-size: 13px;">হাতের লেখা কাগজের স্পষ্ট ছবি দিন</p>
       <div class="preview-box" id="previewBox"></div>
     </div>
 
@@ -263,7 +265,7 @@
       <button id="processBtn" class="btn btn-process" onclick="processImage()" disabled>⚡ Auto Extract Data</button>
       <button id="copyBtn" class="btn btn-copy" onclick="copyForSheet()">📋 Copy for Google Sheets</button>
     </div>
-<!-- 📊 প্রোগ্রেস বার -->
+
     <div class="progress-container" id="progressContainer">
       <div class="progress-header">
         <span id="progressLabel">প্রসেসিং শুরু হচ্ছে...</span>
@@ -273,6 +275,7 @@
         <div class="progress-fill" id="progressFill"></div>
       </div>
     </div>
+
     <div id="status"></div>
 
     <table id="resultTable" style="display:none;">
@@ -297,6 +300,7 @@
 <script>
   let base64Image = null;
   let extractedRows = [];
+  let progressInterval = null;
 
   function printPDF() {
     const iframe = document.getElementById('pdfFrame');
@@ -328,7 +332,6 @@
     localStorage.setItem('gemini_api_key', key);
   }
 
-  
   function handleImage(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -337,7 +340,7 @@
     reader.onload = function(e) {
       const img = new Image();
       img.onload = function() {
-        const MAX_DIM = 1000;
+        const MAX_DIM = 1200;
         let width = img.width;
         let height = img.height;
 
@@ -359,13 +362,14 @@
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.70);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.80);
         base64Image = compressedDataUrl.split(',')[1];
 
         document.getElementById('previewBox').innerHTML = `<img src="${compressedDataUrl}" alt="Preview">`;
         document.getElementById('processBtn').disabled = false;
-        document.getElementById('status').innerText = 'ছবি প্রস্তুত! Auto Extract চাপুন।';
+        document.getElementById('status').innerText = 'ছবি প্রস্তুত! বাটনে ক্লিক করুন।';
         document.getElementById('status').className = 'success';
+        document.getElementById('progressContainer').style.display = 'none';
       };
       img.src = e.target.result;
     };
@@ -380,6 +384,42 @@
     const numPart = match[2];
     const nextNum = parseInt(numPart, 10) + step;
     return prefix + String(nextNum).padStart(numPart.length, '0');
+  }
+
+  function setProgress(percent, text) {
+    const container = document.getElementById('progressContainer');
+    const fill = document.getElementById('progressFill');
+    const label = document.getElementById('progressLabel');
+    const percentTxt = document.getElementById('progressPercent');
+
+    container.style.display = 'block';
+    fill.style.width = percent + '%';
+    percentTxt.innerText = percent + '%';
+    if (text) label.innerText = text;
+  }
+
+  function startProgressSimulation() {
+    let current = 15;
+    setProgress(current, 'সার্ভারে ইমেজ পাঠানো হচ্ছে...');
+
+    progressInterval = setInterval(() => {
+      if (current < 85) {
+        current += Math.floor(Math.random() * 8) + 3;
+        if (current > 85) current = 85;
+
+        let statusText = 'এআই হাতের লেখা বিশ্লেষণ করছে...';
+        if (current > 50) statusText = 'বারকোড ও বিবরণ প্রস্তুত করা হচ্ছে...';
+        
+        setProgress(current, statusText);
+      }
+    }, 350);
+  }
+
+  function stopProgressSimulation() {
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
   }
 
   async function processImage() {
@@ -399,11 +439,12 @@
     const status = document.getElementById('status');
     const processBtn = document.getElementById('processBtn');
 
-    status.className = 'loading';
-    status.innerText = '⚡ ডেটা প্রসেস হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...';
+    status.innerText = '';
+    status.className = '';
     processBtn.disabled = true;
 
-   
+    startProgressSimulation();
+
     const prompt = `
 Extract the handwritten auto-parts table directly.
 Translate any Bengali text into Romanized English uppercase.
@@ -414,32 +455,40 @@ If no local language, format: "BRAND - DESC - CAR".
 No explanation. Output JSON only.
 `;
 
-  
-    const requestPayload = {
-      contents: [{
-        parts: [
-          { text: prompt },
-          { inline_data: { mime_type: "image/jpeg", data: base64Image } }
-        ]
-      }],
-      generationConfig: {
-        response_mime_type: "application/json",
-        temperature: 0.0
-      }
-    };
-
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestPayload)
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+            ]
+          }],
+          generationConfig: {
+            response_mime_type: "application/json",
+            temperature: 0.0
+          }
+        })
       });
+
+      if (response.status === 429) {
+        stopProgressSimulation();
+        for (let s = 20; s > 0; s--) {
+          status.className = 'loading';
+          status.innerText = `⚠️ কোটা লিমিট পার হয়েছে। দয়া করে ${s} সেকেন্ড অপেক্ষা করুন...`;
+          setProgress(Math.round(((20 - s) / 20) * 100), `অপেক্ষা করা হচ্ছে (${s}s)...`);
+          await new Promise(r => setTimeout(r, 1000));
+        }
+        return processImage();
+      }
 
       const data = await response.json();
       if (data.error) throw new Error(data.error.message);
 
       if (!data.candidates || !data.candidates[0].content || !data.candidates[0].content.parts) {
-        throw new Error("এপিআই থেকে কোনো ডেটা আসেনি। স্পষ্ট ছবি দিন।");
+        throw new Error("এপিআই থেকে কোনো ডেটা আসেনি।");
       }
 
       let rawText = data.candidates[0].content.parts[0].text.trim();
@@ -465,14 +514,17 @@ No explanation. Output JSON only.
         };
       });
 
+      stopProgressSimulation();
+      setProgress(100, 'সম্পূর্ণ হয়েছে!');
+
       renderTable(extractedRows);
       status.className = 'success';
-      status.innerText = `সফলভাবে ${extractedRows.length} টি আইটেম তৈরি হয়েছে!`;
+      status.innerText = `সফলভাবে ${extractedRows.length} টি আইটেম তৈরি হয়েছে!`;
       document.getElementById('copyBtn').style.display = 'inline-flex';
     } catch (err) {
-      console.error(err);
+      stopProgressSimulation();
       status.className = 'error';
-      status.innerText = 'সমস্যা হয়েছে: ' + err.message;
+      status.innerText = 'সমস্যা হয়েছে: ' + err.message;
     } finally {
       processBtn.disabled = false;
     }
