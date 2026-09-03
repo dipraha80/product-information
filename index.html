@@ -197,7 +197,7 @@
     <div class="instruction-banner">
       <div class="instruction-text">
         <strong>📌 নির্দেশনা:</strong>
-        প্রোডাক্ট বানানোর পূর্বে ফরম্যাটটি প্রিন্ট করে হাতে তথ্যাদি লিখুন। এরপর সেই পাতার ছবি তুলে নিচে আপলোড করুন।।
+        প্রোডাক্ট বানানোর পূর্বে ফরম্যাটটি প্রিন্ট করে হাতে তথ্যাদি লিখুন, এরপর সেই পাতার ছবি তুলে নিচে আপলোড করুন।
       </div>
       <button type="button" class="btn btn-print-action" onclick="printPDF()">
         🖨️ Print Form (PDF)
@@ -206,10 +206,10 @@
 
     <div class="config-grid">
       <div class="config-box">
-        <label for="apiKey">API Key:</label>
+        <label for="apiKey">Google Gemini API Key:</label>
         <input type="password" id="apiKey" placeholder="AIzaSy..." onchange="saveKey()">
         <small style="color: #666; display:block; margin-top: 4px;">
-          * API Key পেতে ক্লিক করুন ► (<a href="https://aistudio.google.com/app/apikey" target="_blank">API KIEY</a>)
+          * API Key পেতে ক্লিক করুন ► (<a href="https://aistudio.google.com/app/apikey" target="_blank">API KEY</a>)
         </small>
       </div>
       <div class="config-box">
@@ -224,7 +224,7 @@
     <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
       <input type="file" id="fileInput" accept="image/*" onchange="handleImage(event)">
       <strong>ছবি সিলেক্ট করুন বা এখানে ড্রপ করুন</strong>
-      <p style="margin: 5px 0 0; color: #777; font-size: 13px;">হাতের লেখা কাগজের স্পষ্ট ছবি দিন</p>
+      <p style="margin: 5px 0 0; color: #777; font-size: 13px;">হাতের লেখা ইনভয়েস বা খাতার স্পষ্ট ছবি দিন</p>
       <div class="preview-box" id="previewBox"></div>
     </div>
 
@@ -288,6 +288,7 @@
     localStorage.setItem('gemini_api_key', key);
   }
 
+  
   function handleImage(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -296,7 +297,7 @@
     reader.onload = function(e) {
       const img = new Image();
       img.onload = function() {
-        const MAX_DIM = 1600;
+        const MAX_DIM = 1000;
         let width = img.width;
         let height = img.height;
 
@@ -318,12 +319,12 @@
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.70);
         base64Image = compressedDataUrl.split(',')[1];
 
         document.getElementById('previewBox').innerHTML = `<img src="${compressedDataUrl}" alt="Preview">`;
         document.getElementById('processBtn').disabled = false;
-        document.getElementById('status').innerText = 'ছবি প্রস্তুত! বাটনে ক্লিক করুন।';
+        document.getElementById('status').innerText = 'ছবি প্রস্তুত! Auto Extract চাপুন।';
         document.getElementById('status').className = 'success';
       };
       img.src = e.target.result;
@@ -359,63 +360,51 @@
     const processBtn = document.getElementById('processBtn');
 
     status.className = 'loading';
-    status.innerText = 'স্বয়ংক্রিয়ভাবে হাতের লেখা পড়ে ডেটা প্রসেস হচ্ছে...';
+    status.innerText = '⚡ ফাস্ট মোডে ডেটা প্রসেস হচ্ছে, অপেক্ষা করুন...';
     processBtn.disabled = true;
 
+    // সরাসরি দ্রুত পার্স করার জন্য সংক্ষিপ্ত নির্দেশ
     const prompt = `
-You are an expert handwritten auto-parts invoice parser.
-Read the table in the image row by row. If there are ditto marks (' ' or -) repeating previous rows, fill in the correct values.
-
-CRITICAL INSTRUCTIONS:
-1. STRICTLY CONVERT ANY BENGALI WORDS/LETTERS INTO ENGLISH CHARACTERS (transliterate/translate to UPPERCASE English). No Bengali characters.
-2. ALL TEXT OUTPUT MUST BE STRICTLY UPPERCASE.
-3. Extract 'group', 'brand', and the 'formatted_description'.
-
-Format each row as a raw JSON array of objects:
-[
-  {
-    "group": "GROUP NAME",
-    "brand": "BRAND NAME",
-    "formatted_description": "BRAND NAME - DESCRIPTION (LOCAL LANGUAGE) - CAR DETAILS"
-  }
-]
-
-Rule for "formatted_description":
-- Format MUST be: BRAND - DESCRIPTION (LOCAL LANGUAGE) - CAR DETAILS
-- If LOCAL LANGUAGE is present, wrap it in brackets: (LOCAL LANGUAGE).
-- If LOCAL LANGUAGE is NOT present (empty or dash), DO NOT include brackets: BRAND - DESCRIPTION - CAR DETAILS.
-
-Return ONLY the raw JSON array. Do not include markdown code block backticks or explanation.
+Extract the handwritten auto-parts table directly.
+Translate any Bengali text into Romanized English uppercase.
+Strictly all uppercase letters.
+Format output as pure raw JSON:
+[{"group":"GROUP","brand":"BRAND","formatted_description":"BRAND - DESC (LOCAL) - CAR"}]
+If no local language, format: "BRAND - DESC - CAR".
+No explanation. Output JSON only.
 `;
+
+  
+    const requestPayload = {
+      contents: [{
+        parts: [
+          { text: prompt },
+          { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+        ]
+      }],
+      generationConfig: {
+        response_mime_type: "application/json",
+        temperature: 0.0
+      }
+    };
 
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt },
-              { inline_data: { mime_type: "image/jpeg", data: base64Image } }
-            ]
-          }]
-        })
+        body: JSON.stringify(requestPayload)
       });
 
       const data = await response.json();
-      if (data.error) {
-        throw new Error(data.error.message);
-      }
+      if (data.error) throw new Error(data.error.message);
 
       if (!data.candidates || !data.candidates[0].content || !data.candidates[0].content.parts) {
-        throw new Error("এপিআই থেকে কোনো টেক্সট আসেনি। অনুগ্রহ করে স্পষ্ট ছবি দিন।");
+        throw new Error("এপিআই থেকে কোনো ডেটা আসেনি। স্পষ্ট ছবি দিন।");
       }
 
       let rawText = data.candidates[0].content.parts[0].text.trim();
       const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        throw new Error("সঠিক টেবিল ফরম্যাটে ডেটা পাওয়া যায়নি।");
-      }
+      if (!jsonMatch) throw new Error("সঠিক টেবিল ফরম্যাটে ডেটা পাওয়া যায়নি।");
 
       const parsed = JSON.parse(jsonMatch[0]);
 
