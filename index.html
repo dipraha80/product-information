@@ -388,11 +388,11 @@ Rule for "formatted_description":
 Return ONLY raw JSON array. Do not wrap in markdown or explanation.
 `;
 
-    // গুগলের ৩টি অফিসিয়াল মডেল ক্রমানুসারে ট্রাই হবে
+    // গুগলের রেকমেন্ড করা লেটেস্ট মডেল তালিকা
     const targetModels = [
-      'gemini-2.5-flash',
-      'gemini-2.0-flash',
-      'gemini-2.5-pro'
+      'gemini-3.1-flash-preview',
+      'gemini-3.1-pro-preview',
+      'gemini-2.0-flash'
     ];
 
     let success = false;
@@ -424,12 +424,10 @@ Return ONLY raw JSON array. Do not wrap in markdown or explanation.
         }
 
         if (!data.candidates || !data.candidates[0].content || !data.candidates[0].content.parts) {
-          throw new Error("API থেকে কোনো টেক্সট আসেনি।");
+          throw new Error("API থেকে কোনো রেসপন্স আসেনি।");
         }
 
         let rawText = data.candidates[0].content.parts[0].text.trim();
-        
-        // ক্লিন জেসন এক্সট্রাক্ট
         const jsonMatch = rawText.match(/\[[\s\S]*\]/);
         if (!jsonMatch) {
           throw new Error("সঠিক ফরম্যাটে ডেটা পাওয়া যায়নি।");
