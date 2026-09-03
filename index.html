@@ -28,6 +28,7 @@
       border-radius: 12px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
+    /* হেডার ডিজাইন */
     .header-section {
       display: flex;
       align-items: center;
@@ -54,6 +55,7 @@
       font-size: 16px;
       font-weight: 600;
     }
+    /* নির্দেশনাসহ সরাসরি প্রিন্ট ব্যানার */
     .instruction-banner {
       background: #eff6ff;
       border-left: 5px solid #2563eb;
@@ -77,6 +79,7 @@
       margin-bottom: 2px;
       font-size: 14px;
     }
+    /* ইনপুট কনফিগ গ্রিড */
     .config-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
@@ -106,6 +109,7 @@
       border-radius: 6px;
       font-size: 14px;
     }
+    /* আপলোড বক্স */
     .upload-zone {
       border: 2px dashed #d90429;
       border-radius: 8px;
@@ -165,6 +169,7 @@
     }
     th { background-color: #f8fafc; color: #475569; }
     tr:nth-child(even) { background-color: #f9fbfd; }
+    /* ফুটার ডিজাইন */
     footer {
       background: #1e293b;
       color: #f8fafc;
@@ -186,6 +191,7 @@
 
 <div class="main-wrapper">
   <div class="container">
+    <!-- হেডার অংশ -->
     <div class="header-section">
       <img src="logo.png" alt="Pathan Motors Logo" class="header-logo" onerror="this.style.display='none'">
       <div class="header-title-box">
@@ -194,6 +200,7 @@
       </div>
     </div>
 
+    <!-- নির্দেশনাসহ সরাসরি প্রিন্ট ব্যানার -->
     <div class="instruction-banner">
       <div class="instruction-text">
         <strong>📌 নির্দেশনা:</strong>
@@ -204,23 +211,25 @@
       </button>
     </div>
 
+    <!-- কনফিগারেশন গ্রিড: API Key এবং Unique Code -->
     <div class="config-grid">
       <div class="config-box">
         <label for="apiKey">Google Gemini API Key:</label>
         <input type="password" id="apiKey" placeholder="AIzaSy..." onchange="saveKey()">
         <small style="color: #666; display:block; margin-top: 4px;">
-          * API KEY পেতে Click করুন ► (<a href="https://aistudio.google.com/app/apikey" target="_blank">API KEY</a>)
+          * ব্রাউজারে সংরক্ষিত থাকবে (<a href="https://aistudio.google.com/app/apikey" target="_blank">AI Studio</a>)
         </small>
       </div>
       <div class="config-box">
         <label for="startCode">Unique Starting Code:</label>
-        <input type="text" id="startCode" placeholder="e.g. 1001">
+        <input type="text" id="startCode" placeholder="e.g. 1001 বা A101">
         <small style="color: #666; display:block; margin-top: 4px;">
           * প্রথম আইটেমের বারকোডের কোড
         </small>
       </div>
     </div>
 
+    <!-- ইমেজ আপলোড অংশ -->
     <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
       <input type="file" id="fileInput" accept="image/*" onchange="handleImage(event)">
       <strong>ছবি সিলেক্ট করুন বা এখানে ড্রপ করুন</strong>
@@ -228,6 +237,7 @@
       <div class="preview-box" id="previewBox"></div>
     </div>
 
+    <!-- অ্যাকশন বাটন -->
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
       <button id="processBtn" class="btn btn-process" onclick="processImage()" disabled>⚡ Auto Extract Data</button>
       <button id="copyBtn" class="btn btn-copy" onclick="copyForSheet()">📋 Copy for Google Sheets</button>
@@ -235,6 +245,7 @@
 
     <div id="status"></div>
 
+    <!-- এক্সট্রাক্ট করা ডেটা টেবিল: GROUP | DESCRIPTION | BARCODE -->
     <table id="resultTable" style="display:none;">
       <thead>
         <tr>
@@ -248,8 +259,10 @@
   </div>
 </div>
 
+<!-- অদৃশ্য আইফ্রেম (সরাসরি PDF প্রিন্ট ডায়ালগ আনার জন্য) -->
 <iframe id="pdfFrame" src="INFO.pdf" style="display:none;"></iframe>
 
+<!-- ফুটার অংশ -->
 <footer>
   Developed by <b>Dip Raha</b> | Email: <a href="mailto:dipraha7@gmail.com">dipraha7@gmail.com</a> | Cell: <a href="tel:01910226680">01910226680</a>
 </footer>
@@ -258,6 +271,7 @@
   let base64Image = null;
   let extractedRows = [];
 
+  // সরাসরি PDF প্রিন্ট ডায়ালগ চালু করার ফাংশন
   function printPDF() {
     const iframe = document.getElementById('pdfFrame');
     if (iframe) {
@@ -288,6 +302,7 @@
     localStorage.setItem('gemini_api_key', key);
   }
 
+  // দ্রুত প্রসেসিংয়ের জন্য ক্লায়েন্ট-সাইড অটো কম্প্রেশন
   function handleImage(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -296,7 +311,7 @@
     reader.onload = function(e) {
       const img = new Image();
       img.onload = function() {
-        const MAX_DIM = 1500;
+        const MAX_DIM = 1600;
         let width = img.width;
         let height = img.height;
 
@@ -334,38 +349,13 @@
   function getNextCode(currentCode, step) {
     const str = String(currentCode).trim();
     const match = str.match(/^(.*?)(\d+)$/);
-    if (!match) return str + step;
+    if (!match) {
+      return str + step;
+    }
     const prefix = match[1];
     const numPart = match[2];
     const nextNum = parseInt(numPart, 10) + step;
     return prefix + String(nextNum).padStart(numPart.length, '0');
-  }
-
-  // 🔍 স্বয়ংক্রিয়ভাবে আপনার এপিআই কীতে যে মডেলগুলো সচল আছে তা খুঁজে বের করার ফাংশন
-  async function getAvailableModels(apiKey) {
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-      const data = await res.json();
-      if (data.models && Array.isArray(data.models)) {
-        // শুধুমাত্র যে মডেলগুলো generateContent সাপোর্ট করে
-        const activeModels = data.models
-          .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent"))
-          .map(m => m.name.replace("models/", ""));
-
-        // ফ্ল্যাশ মডেলগুলোকে আগে প্রাধান্য দেওয়া
-        activeModels.sort((a, b) => {
-          if (a.includes('flash') && !b.includes('flash')) return -1;
-          if (!a.includes('flash') && b.includes('flash')) return 1;
-          return 0;
-        });
-
-        if (activeModels.length > 0) return activeModels;
-      }
-    } catch (e) {
-      console.warn("Could not fetch models dynamically:", e);
-    }
-    // ডিফল্ট ব্যাকআপ লিস্ট
-    return ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash'];
   }
 
   async function processImage() {
@@ -382,11 +372,11 @@
     }
 
     const startCodeInput = document.getElementById('startCode').value.trim() || '1001';
+
     const status = document.getElementById('status');
     const processBtn = document.getElementById('processBtn');
-
     status.className = 'loading';
-    status.innerText = 'উপলব্ধ মডেল যাচাই করা হচ্ছে...';
+    status.innerText = 'স্বয়ংক্রিয়ভাবে হাতের লেখা পড়ে ডেটা প্রসেস হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...';
     processBtn.disabled = true;
 
     const prompt = `
@@ -415,76 +405,60 @@ Rule for "formatted_description":
 Return ONLY valid raw JSON without markdown or backticks.
 `;
 
-    // আপনার একাউন্টে বর্তমানে সচল থাকা মডেলগুলো স্বয়ংক্রিয়ভাবে সংগ্রহ করা
-    const candidateModels = await getAvailableModels(apiKey);
+    try {
+      // আপনার সফল হওয়া gemini-3.6-flash মডেলটিই বহাল রাখা হয়েছে
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+            ]
+          }]
+        })
+      });
 
-    let success = false;
-    let lastError = null;
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message);
 
-    for (const model of candidateModels) {
-      try {
-        status.innerText = `হাতের লেখা প্রসেস হচ্ছে (${model})...`;
-        
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: prompt },
-                { inline_data: { mime_type: "image/jpeg", data: base64Image } }
-              ]
-            }]
-          })
-        });
-
-        const data = await response.json();
-        if (data.error) {
-          throw new Error(data.error.message);
-        }
-
-        let rawText = data.candidates[0].content.parts[0].text.trim();
-        if (rawText.startsWith('```')) {
-          rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-        }
-
-        const parsed = JSON.parse(rawText);
-
-        extractedRows = parsed.map((r, index) => {
-          const groupStr = (r.group || 'GRP').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-          const brandStr = (r.brand || 'BRD').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-
-          const g3 = (groupStr.padEnd(3, 'X')).substring(0, 3);
-          const b3 = (brandStr.padEnd(3, 'X')).substring(0, 3);
-          const uniqueCode = getNextCode(startCodeInput, index).toUpperCase();
-
-          const barcode = `${g3}${b3}${uniqueCode}`;
-
-          return {
-            group: (r.group || '').toUpperCase(),
-            formatted_description: (r.formatted_description || '').toUpperCase(),
-            barcode: barcode
-          };
-        });
-
-        renderTable(extractedRows);
-        status.className = 'success';
-        status.innerText = `সফলভাবে ${extractedRows.length} টি আইটেম তৈরি হয়েছে!`;
-        document.getElementById('copyBtn').style.display = 'inline-flex';
-        success = true;
-        break; // সফলভাবে কাজ সম্পন্ন হলে লুপ শেষ
-      } catch (err) {
-        console.warn(`Model ${model} failed, switching to next available... Error:`, err.message);
-        lastError = err;
+      let rawText = data.candidates[0].content.parts[0].text.trim();
+      if (rawText.startsWith('```')) {
+        rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
       }
-    }
 
-    if (!success) {
+      const parsed = JSON.parse(rawText);
+
+      extractedRows = parsed.map((r, index) => {
+        const groupStr = (r.group || 'GRP').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        const brandStr = (r.brand || 'BRD').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+        const g3 = (groupStr.padEnd(3, 'X')).substring(0, 3);
+        const b3 = (brandStr.padEnd(3, 'X')).substring(0, 3);
+        const uniqueCode = getNextCode(startCodeInput, index).toUpperCase();
+
+        const barcode = `${g3}${b3}${uniqueCode}`;
+
+        return {
+          group: (r.group || '').toUpperCase(),
+          formatted_description: (r.formatted_description || '').toUpperCase(),
+          barcode: barcode
+        };
+      });
+
+      renderTable(extractedRows);
+
+      status.className = 'success';
+      status.innerText = `সফলভাবে ${extractedRows.length} টি আইটেম তৈরি হয়েছে!`;
+      document.getElementById('copyBtn').style.display = 'inline-flex';
+    } catch (err) {
+      console.error(err);
       status.className = 'error';
-      status.innerText = 'সমস্যা হয়েছে: ' + (lastError ? lastError.message : 'API এরর');
+      status.innerText = 'সমস্যা হয়েছে: ' + err.message;
+    } finally {
+      processBtn.disabled = false;
     }
-
-    processBtn.disabled = false;
   }
 
   function renderTable(rows) {
