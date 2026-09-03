@@ -55,12 +55,20 @@
       font-size: 16px;
       font-weight: 600;
     }
-    /* API Key কনফিগ বক্স */
+    /* ইনপুট কনফিগ গ্রিড */
+    .config-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 600px) {
+      .config-grid { grid-template-columns: 1fr; }
+    }
     .config-box {
       background: #fdf2f2;
-      padding: 15px;
+      padding: 14px;
       border-radius: 8px;
-      margin-bottom: 20px;
       border: 1px solid #fecaca;
     }
     .config-box label {
@@ -72,7 +80,7 @@
     }
     .config-box input {
       width: 100%;
-      padding: 10px;
+      padding: 9px;
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 14px;
@@ -131,7 +139,7 @@
       padding: 12px;
       text-align: left;
       font-size: 14px;
-      text-transform: uppercase; /* ডিসপ্লেতেও সম্পূর্ণ বড় হাতের দেখাবে */
+      text-transform: uppercase;
     }
     th { background-color: #f8fafc; color: #475569; }
     tr:nth-child(even) { background-color: #f9fbfd; }
@@ -157,6 +165,7 @@
 
 <div class="main-wrapper">
   <div class="container">
+    <!-- হেডার অংশ -->
     <div class="header-section">
       <img src="logo.png" alt="Pathan Motors Logo" class="header-logo" onerror="this.style.display='none'">
       <div class="header-title-box">
@@ -165,14 +174,25 @@
       </div>
     </div>
 
-    <div class="config-box">
-      <label for="apiKey">আপনার Google Gemini API Key দিন (১০০% ফ্রি):</label>
-      <input type="password" id="apiKey" placeholder="AIzaSy..." onchange="saveKey()">
-      <small style="color: #666; display:block; margin-top: 5px;">
-        * চাবিটি শুধু আপনার ব্রাউজারেই সেভ থাকবে। (ফ্রি কী সংগ্রহ করতে: <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>-তে যান)
-      </small>
+    <!-- কনফিগারেশন গ্রিড: API Key এবং Unique Code -->
+    <div class="config-grid">
+      <div class="config-box">
+        <label for="apiKey">Google Gemini API Key:</label>
+        <input type="password" id="apiKey" placeholder="AIzaSy..." onchange="saveKey()">
+        <small style="color: #666; display:block; margin-top: 4px;">
+          * ব্রাউজারে সংরক্ষিত থাকবে (<a href="https://aistudio.google.com/app/apikey" target="_blank">AI Studio</a>)
+        </small>
+      </div>
+      <div class="config-box">
+        <label for="startCode">Unique Starting Code:</label>
+        <input type="text" id="startCode" placeholder="e.g. 1001 বা A101">
+        <small style="color: #666; display:block; margin-top: 4px;">
+          * প্রথম আইটেমের বারকোডের কোড
+        </small>
+      </div>
     </div>
 
+    <!-- ইমেজ আপলোড অংশ -->
     <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
       <input type="file" id="fileInput" accept="image/*" onchange="handleImage(event)">
       <strong>ছবি সিলেক্ট করুন বা এখানে ড্রপ করুন</strong>
@@ -180,6 +200,7 @@
       <div class="preview-box" id="previewBox"></div>
     </div>
 
+    <!-- অ্যাকশন বাটন -->
     <div style="display: flex; gap: 10px;">
       <button id="processBtn" class="btn btn-process" onclick="processImage()" disabled>⚡ Auto Extract Data</button>
       <button id="copyBtn" class="btn btn-copy" onclick="copyForSheet()">📋 Copy for Google Sheets</button>
@@ -187,11 +208,13 @@
 
     <div id="status"></div>
 
+    <!-- এক্সট্রাক্ট করা ডেটা টেবিল: GROUP | DESCRIPTION | BARCODE -->
     <table id="resultTable" style="display:none;">
       <thead>
         <tr>
-          <th style="width: 25%;">GROUP</th>
+          <th style="width: 20%;">GROUP</th>
           <th>DESCRIPTION</th>
+          <th style="width: 25%;">BARCODE</th>
         </tr>
       </thead>
       <tbody id="tableBody"></tbody>
@@ -199,6 +222,7 @@
   </div>
 </div>
 
+<!-- ফুটার অংশ -->
 <footer>
   Developed by <b>Dip Raha</b> | Email: <a href="mailto:dipraha7@gmail.com">dipraha7@gmail.com</a> | Cell: <a href="tel:01910226680">01910226680</a>
 </footer>
@@ -235,6 +259,18 @@
     reader.readAsDataURL(file);
   }
 
+  function getNextCode(currentCode, step) {
+    const str = String(currentCode).trim();
+    const match = str.match(/^(.*?)(\d+)$/);
+    if (!match) {
+      return str + step;
+    }
+    const prefix = match[1];
+    const numPart = match[2];
+    const nextNum = parseInt(numPart, 10) + step;
+    return prefix + String(nextNum).padStart(numPart.length, '0');
+  }
+
   async function processImage() {
     const apiKey = document.getElementById('apiKey').value.trim();
     if (!apiKey) {
@@ -248,25 +284,28 @@
       return;
     }
 
+    const startCodeInput = document.getElementById('startCode').value.trim() || '1001';
+
     const status = document.getElementById('status');
     const processBtn = document.getElementById('processBtn');
     status.className = 'loading';
     status.innerText = 'স্বয়ংক্রিয়ভাবে হাতের লেখা পড়ে ডেটা প্রসেস হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...';
     processBtn.disabled = true;
 
-    // বাংলা শব্দ থাকলে ইংরেজি অক্ষরে রূপান্তর এবং সম্পূর্ণ UPPERCASE রাখার প্রম্পট
     const prompt = `
 You are an expert handwritten auto-parts invoice parser.
 Read the table in the image row by row. If there are ditto marks (' ' or -) repeating previous rows, fill in the correct values.
 
 CRITICAL INSTRUCTIONS:
-1. STRICTLY CONVERT ANY BENGALI WORDS/LETTERS INTO ENGLISH CHARACTERS (e.g., if handwritten in Bangla like 'চাকার ছোট', transliterate/translate to 'CHAKAR CHOTO' or 'CHAKAR SMALL'). Do NOT keep any Bengali script.
-2. ALL TEXT OUTPUT MUST BE STRICTLY UPPERCASE ONLY.
+1. STRICTLY CONVERT ANY BENGALI WORDS/LETTERS INTO ENGLISH CHARACTERS (e.g. transliterate/translate to UPPERCASE English). No Bengali characters.
+2. ALL TEXT OUTPUT MUST BE STRICTLY UPPERCASE.
+3. Extract 'group', 'brand', and the 'formatted_description'.
 
 Format each row as a raw JSON array of objects:
 [
   {
-    "group": "GEAR/SPRING/ETC.",
+    "group": "GROUP NAME",
+    "brand": "BRAND NAME",
     "formatted_description": "BRAND NAME - DESCRIPTION (LOCAL LANGUAGE) - CAR DETAILS"
   }
 ]
@@ -275,7 +314,6 @@ Rule for "formatted_description":
 - Format MUST be: BRAND - DESCRIPTION (LOCAL LANGUAGE) - CAR DETAILS
 - If LOCAL LANGUAGE is present, wrap it in brackets: (LOCAL LANGUAGE).
 - If LOCAL LANGUAGE is NOT present (empty or dash), DO NOT include brackets: BRAND - DESCRIPTION - CAR DETAILS.
-- EVERYTHING in group and formatted_description MUST BE IN UPPERCASE ENGLISH ONLY.
 
 Return ONLY valid raw JSON without markdown or backticks.
 `;
@@ -303,11 +341,23 @@ Return ONLY valid raw JSON without markdown or backticks.
       }
 
       const parsed = JSON.parse(rawText);
-      // কোড লেভেলেও নিশ্চিত করা যে সব টেক্সট বাধ্যতামূলক UPPERCASE হবে
-      extractedRows = parsed.map(r => ({
-        group: (r.group || '').toUpperCase(),
-        formatted_description: (r.formatted_description || '').toUpperCase()
-      }));
+
+      extractedRows = parsed.map((r, index) => {
+        const groupStr = (r.group || 'GRP').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        const brandStr = (r.brand || 'BRD').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+        const g3 = (groupStr.padEnd(3, 'X')).substring(0, 3);
+        const b3 = (brandStr.padEnd(3, 'X')).substring(0, 3);
+        const uniqueCode = getNextCode(startCodeInput, index).toUpperCase();
+
+        const barcode = `${g3}${b3}${uniqueCode}`;
+
+        return {
+          group: (r.group || '').toUpperCase(),
+          formatted_description: (r.formatted_description || '').toUpperCase(),
+          barcode: barcode
+        };
+      });
 
       renderTable(extractedRows);
 
@@ -330,20 +380,21 @@ Return ONLY valid raw JSON without markdown or backticks.
 
     rows.forEach(r => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${r.group || ''}</td><td>${r.formatted_description || ''}</td>`;
+      // নতুন কলাম বিন্যাস: GROUP | DESCRIPTION | BARCODE
+      tr.innerHTML = `<td>${r.group}</td><td>${r.formatted_description}</td><td><b>${r.barcode}</b></td>`;
       tbody.appendChild(tr);
     });
 
     table.style.display = 'table';
   }
 
-  // শুধুমাত্র মূল ডেটা UPPERCASE ফরম্যাটে কপি হবে (হেডার ছাড়া)
+  // গুগল শিটে পেস্ট করার ফরম্যাট: GROUP \t DESCRIPTION \t BARCODE
   function copyForSheet() {
     if (extractedRows.length === 0) return;
 
     let tsv = "";
     extractedRows.forEach(r => {
-      tsv += `${r.group || ''}\t${r.formatted_description || ''}\n`;
+      tsv += `${r.group}\t${r.formatted_description}\t${r.barcode}\n`;
     });
 
     navigator.clipboard.writeText(tsv).then(() => {
